@@ -1,5 +1,5 @@
 import {
-  Table,
+  Table as TableComponent,
   TableBody,
   TableCell,
   TableHead,
@@ -10,9 +10,15 @@ import {
 import type { Table } from "@tanstack/react-table";
 import { flexRender } from "@tanstack/react-table";
 
-export function DataTable({ table }: { table: Table }) {
+export function DataTable<T>({
+  table,
+  onRowClick,
+}: {
+  table: Table<T>;
+  onRowClick?: (data: T) => void;
+}) {
   return (
-    <Table>
+    <TableComponent>
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
@@ -22,7 +28,7 @@ export function DataTable({ table }: { table: Table }) {
                   ? null
                   : flexRender(
                       header.column.columnDef.header,
-                      header.getContext(),
+                      header.getContext()
                     )}
               </TableHead>
             ))}
@@ -35,6 +41,8 @@ export function DataTable({ table }: { table: Table }) {
             <TableRow
               key={row.id}
               data-state={row.getIsSelected() && "selected"}
+              onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+              className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
@@ -45,12 +53,15 @@ export function DataTable({ table }: { table: Table }) {
           ))
         ) : (
           <TableRow>
-            <TableCell colSpan={columns.length} className="h-24 text-center">
+            <TableCell
+              colSpan={table.getAllColumns().length}
+              className="h-24 text-center"
+            >
               No results.
             </TableCell>
           </TableRow>
         )}
       </TableBody>
-    </Table>
+    </TableComponent>
   );
 }

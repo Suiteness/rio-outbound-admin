@@ -2,22 +2,19 @@ export const CUSTOMER_QUERIES = {
   BASE_SELECT: `
     SELECT 
       customers.*,
-      customer_subscriptions.id as subscription_id,
-      customer_subscriptions.status as subscription_status,
-      subscriptions.name as subscription_name,
-      subscriptions.description as subscription_description,
-      subscriptions.price as subscription_price
+      offers.id as offer_id,
+      offers.hotel_offer,
+      offers.food_offer,
+      offers.bonus_play_offer,
+      offers.offer_start_date,
+      offers.offer_end_date,
+      offers.validity_start_date,
+      offers.validity_end_date
     FROM customers 
-    LEFT JOIN customer_subscriptions 
-      ON customers.id = customer_subscriptions.customer_id
-    LEFT JOIN subscriptions
-      ON customer_subscriptions.subscription_id = subscriptions.id
+    LEFT JOIN offers 
+      ON customers.id = offers.customer_id
   `,
-  INSERT_CUSTOMER: `INSERT INTO customers (name, email, notes) VALUES (?, ?, ?)`,
-  INSERT_CUSTOMER_SUBSCRIPTION: `
-    INSERT INTO customer_subscriptions (customer_id, subscription_id, status) 
-    VALUES (?, ?, ?)
-  `,
+  INSERT_CUSTOMER: `INSERT INTO customers (firstName, lastName, email, phoneNumber, playerId, playerTier, optPhone, optText, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   GET_BY_ID: `WHERE customers.id = ?`,
   GET_BY_EMAIL: `WHERE customers.email = ?`,
 };
@@ -28,24 +25,34 @@ const processCustomerResults = (rows: any[]) => {
   rows.forEach((row) => {
     if (!customersMap.has(row.id)) {
       const customer = { ...row };
-      if (row.subscription_id) {
-        customer.subscription = {
-          id: row.subscription_id,
-          status: row.subscription_status,
-          name: row.subscription_name,
-          description: row.subscription_description,
-          price: row.subscription_price,
-        };
-      }
-      // Clean up raw join fields
-      delete customer.subscription_id;
-      delete customer.subscription_status;
-      delete customer.subscription_name;
-      delete customer.subscription_description;
-      delete customer.subscription_price;
-
+      customer.offers = [];
       customersMap.set(row.id, customer);
     }
+
+    const customer = customersMap.get(row.id);
+    
+    if (row.offer_id) {
+      customer.offers.push({
+        id: row.offer_id,
+        hotel_offer: row.hotel_offer,
+        food_offer: row.food_offer,
+        bonus_play_offer: row.bonus_play_offer,
+        offer_start_date: row.offer_start_date,
+        offer_end_date: row.offer_end_date,
+        validity_start_date: row.validity_start_date,
+        validity_end_date: row.validity_end_date,
+      });
+    }
+
+    // Clean up raw join fields
+    delete customer.offer_id;
+    delete customer.hotel_offer;
+    delete customer.food_offer;
+    delete customer.bonus_play_offer;
+    delete customer.offer_start_date;
+    delete customer.offer_end_date;
+    delete customer.validity_start_date;
+    delete customer.validity_end_date;
   });
 
   return Array.from(customersMap.values());
@@ -91,20 +98,22 @@ export class CustomerService {
   }
 
   async create(customerData: {
-    name: string;
-    email: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phoneNumber?: string;
+    playerId?: number;
+    playerTier?: string;
+    optPhone: boolean;
+    optText: boolean;
     notes?: string;
-    subscription?: {
-      id: number;
-      status: string;
-    };
   }) {
-    const { name, email, notes, subscription } = customerData;
+    const { firstName, lastName, email, phoneNumber, playerId, playerTier, optPhone, optText, notes } = customerData;
 
     const customerResponse = await this.DB.prepare(
       CUSTOMER_QUERIES.INSERT_CUSTOMER,
     )
-      .bind(name, email, notes || null)
+      .bind(firstName, lastName, email || null, phoneNumber || null, playerId || null, playerTier || null, optPhone ? 1 : 0, optText ? 1 : 0, notes || null)
       .run();
 
     if (!customerResponse.success) {
@@ -112,18 +121,6 @@ export class CustomerService {
     }
 
     const customerId = customerResponse.meta.last_row_id;
-
-    if (subscription) {
-      const subscriptionResponse = await this.DB.prepare(
-        CUSTOMER_QUERIES.INSERT_CUSTOMER_SUBSCRIPTION,
-      )
-        .bind(customerId, subscription.id, subscription.status)
-        .run();
-
-      if (!subscriptionResponse.success) {
-        throw new Error("Failed to create customer subscription relationship");
-      }
-    }
 
     return { success: true, customerId };
   }

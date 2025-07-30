@@ -13,7 +13,7 @@ import { CreateCustomerButton } from '@/components/admin/create-customer';
 
 <Layout title="Customers">
   {customers.length ? (
-    <CustomersTable data={customers} />
+    <CustomersTable data={customers} client:load />
   ) : (
     <p class="font-medium text-muted-foreground">
       No customers yet. Try creating one using the API or by selecting "Create New Customer" above.

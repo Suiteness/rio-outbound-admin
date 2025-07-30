@@ -24,11 +24,31 @@ import { createCustomer } from "@/lib/api";
 import * as v from "valibot";
 
 const formSchema = v.object({
-  name: v.pipe(
+  firstName: v.pipe(
     v.string(),
-    v.minLength(2, "Name must be at least 2 characters")
+    v.minLength(2, "First name must be at least 2 characters")
   ),
-  email: v.pipe(v.string(), v.email("Invalid email address")),
+  lastName: v.pipe(
+    v.string(),
+    v.minLength(2, "Last name must be at least 2 characters")
+  ),
+  email: v.optional(
+    v.union([
+      v.literal(""),
+      v.pipe(v.string(), v.email("Invalid email address")),
+    ])
+  ),
+  phoneNumber: v.optional(v.string()),
+  playerId: v.optional(
+    v.pipe(
+      v.number(),
+      v.integer("Player ID must be an integer"),
+      v.minValue(1, "Player ID must be greater than 0")
+    )
+  ),
+  playerTier: v.optional(v.string()),
+  optPhone: v.boolean(),
+  optText: v.boolean(),
   notes: v.optional(v.string()),
 });
 
@@ -40,8 +60,14 @@ export function CreateCustomerButton({ apiToken }: { apiToken: string }) {
   const form = useForm<FormValues>({
     resolver: valibotResolver(formSchema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
+      phoneNumber: "",
+      playerId: undefined,
+      playerTier: "",
+      optPhone: false,
+      optText: false,
       notes: "",
     },
   });
@@ -75,26 +101,42 @@ export function CreateCustomerButton({ apiToken }: { apiToken: string }) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter customer name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter first name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter last name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email (Optional)</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
@@ -109,10 +151,107 @@ export function CreateCustomerButton({ apiToken }: { apiToken: string }) {
 
             <FormField
               control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="tel"
+                      placeholder="Enter phone number"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="playerId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Player ID (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Enter player ID"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(
+                            value === "" ? undefined : parseInt(value, 10)
+                          );
+                        }}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="playerTier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Player Tier (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter player tier" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="optPhone"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="h-4 w-4"
+                      />
+                    </FormControl>
+                    <FormLabel>Opt-in for Phone</FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="optText"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="h-4 w-4"
+                      />
+                    </FormControl>
+                    <FormLabel>Opt-in for Text</FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+                  <FormLabel>Notes (Optional)</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Enter any additional notes"

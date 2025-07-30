@@ -1,5 +1,7 @@
 ---
 import { RunCustomerWorkflowButton } from '@/components/admin/run-customer-workflow';
+import { CustomerOffersTable } from '@/components/admin/customer-offers-table';
+import { CreateCustomerOfferButton } from '@/components/admin/create-customer-offer';
 import Layout from '@/layouts/Layout.astro';
 import { CustomerService } from '@/lib/services/customer';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,32 +10,100 @@ const { API_TOKEN, DB } = Astro.locals.runtime.env;
 const { id } = Astro.params;
 
 const customerService = new CustomerService(DB);
-const customer = await customerService.getById(id);
+const customer = await customerService.getById(Number(id));
+
+if (!customer) {
+  return Astro.redirect('/admin/customers');
+}
+
+const customerName = `${customer.firstName} ${customer.lastName}`;
 ---
-<Layout title={customer.name}>
-  <h2 class="text-xl font-bold tracking-tight">Customer Details</h2>
-  <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead>Name</TableHead>
-        <TableHead>Email</TableHead>
-        <TableHead>Notes</TableHead>
-        <TableHead>Created At</TableHead>
-        <TableHead>Updated At</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      <TableRow>
-        <TableCell>{customer.name}</TableCell>
-        <TableCell>{customer.email}</TableCell>
-        <TableCell>{customer.notes}</TableCell>
-        <TableCell>{customer.created_at}</TableCell>
-        <TableCell>{customer.updated_at}</TableCell>
-      </TableRow>
-    </TableBody>
-  </Table>
+<Layout title={customerName}>
+  <div class="space-y-8">
+    <!-- Customer Details Section -->
+    <div>
+      <h2 class="text-2xl font-bold tracking-tight mb-4">Customer Details</h2>
+      <div class="grid gap-6 md:grid-cols-2">
+        <!-- Basic Information -->
+        <div class="rounded-lg border p-6">
+          <h3 class="text-lg font-semibold mb-4">Basic Information</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="font-medium text-muted-foreground">ID:</span>
+              <span>{customer.id}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium text-muted-foreground">Name:</span>
+              <span>{customer.firstName} {customer.lastName}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium text-muted-foreground">Email:</span>
+              <span>{customer.email || "—"}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium text-muted-foreground">Phone:</span>
+              <span>{customer.phoneNumber || "—"}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Player Information -->
+        <div class="rounded-lg border p-6">
+          <h3 class="text-lg font-semibold mb-4">Player Information</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="font-medium text-muted-foreground">Player ID:</span>
+              <span>{customer.playerId || "—"}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium text-muted-foreground">Player Tier:</span>
+              <span>{customer.playerTier || "—"}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium text-muted-foreground">Created:</span>
+              <span>{new Date(customer.created_at).toLocaleDateString()}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium text-muted-foreground">Updated:</span>
+              <span>{new Date(customer.updated_at).toLocaleDateString()}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes Section -->
+      {customer.notes && (
+        <div class="rounded-lg border p-6 mt-6">
+          <h3 class="text-lg font-semibold mb-4">Notes</h3>
+          <p class="text-muted-foreground whitespace-pre-wrap">{customer.notes}</p>
+        </div>
+      )}
+    </div>
+
+    <!-- Customer Offers Section -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold tracking-tight">Customer Offers</h2>
+        <CreateCustomerOfferButton 
+          apiToken={API_TOKEN} 
+          customerId={customer.id} 
+          customerName={customerName}
+          client:load 
+        />
+      </div>
+      
+      {customer.offers && customer.offers.length > 0 ? (
+        <CustomerOffersTable data={customer.offers} client:load />
+      ) : (
+        <div class="rounded-lg border p-8 text-center">
+          <p class="text-muted-foreground">No offers yet for this customer.</p>
+          <p class="text-sm text-muted-foreground mt-2">Create the first offer using the button above.</p>
+        </div>
+      )}
+    </div>
+  </div>
 
   <div slot="actions">
-    <RunCustomerWorkflowButton apiToken={API_TOKEN} client:only="react" customerId={id} />
+    <RunCustomerWorkflowButton apiToken={API_TOKEN} client:load customerId={id} />
   </div>
 </Layout>
