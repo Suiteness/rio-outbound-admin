@@ -16,26 +16,35 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { valibotResolver } from "@hookform/resolvers/valibot";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { createSubscription } from "@/lib/api";
-import * as z from "zod";
+import * as v from "valibot";
 
-const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  price: z.number().min(0, "Price must be a positive number"),
-  features: z.array(
-    z.object({
-      name: z.string().min(2, "Feature name must be at least 2 characters"),
-      description: z.string().optional(),
-    }),
+const formSchema = v.object({
+  name: v.pipe(
+    v.string(),
+    v.minLength(2, "Name must be at least 2 characters")
+  ),
+  description: v.pipe(
+    v.string(),
+    v.minLength(10, "Description must be at least 10 characters")
+  ),
+  price: v.pipe(v.number(), v.minValue(0, "Price must be a positive number")),
+  features: v.array(
+    v.object({
+      name: v.pipe(
+        v.string(),
+        v.minLength(2, "Feature name must be at least 2 characters")
+      ),
+      description: v.optional(v.string()),
+    })
   ),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = v.InferOutput<typeof formSchema>;
 
 type Feature = {
   name: string;
@@ -51,7 +60,7 @@ export function CreateSubscriptionButton({ apiToken }: { apiToken: string }) {
   });
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: valibotResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",

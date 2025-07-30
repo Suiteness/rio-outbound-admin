@@ -17,7 +17,7 @@ A complete admin dashboard template built with Astro, Shadcn UI, and Cloudflare'
 - 🚀 Deploy to Cloudflare Workers
 - 📦 Powered by Cloudflare D1 database
 - ✨ Clean, responsive interface
-- 🔍 Data validation with Zod
+- 🔍 Data validation with Valibot
 
 ## Tech Stack
 
@@ -25,7 +25,7 @@ A complete admin dashboard template built with Astro, Shadcn UI, and Cloudflare'
 - UI Components: [Shadcn UI](https://ui.shadcn.com)
 - Database: [Cloudflare D1](https://developers.cloudflare.com/d1)
 - Deployment: [Cloudflare Workers](https://workers.cloudflare.com)
-- Validation: [Zod](https://github.com/colinhacks/zod)
+- Validation: [Valibot](https://valibot.dev)
 
 > [!IMPORTANT]
 > When using C3 to create this project, select "no" when it asks if you want to deploy. You need to follow this project's [setup steps](https://github.com/cloudflare/templates/tree/main/d1-template#setup-steps) before deploying.

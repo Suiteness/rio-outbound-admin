@@ -16,26 +16,29 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { valibotResolver } from "@hookform/resolvers/valibot";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { createCustomer } from "@/lib/api";
-import * as z from "zod";
+import * as v from "valibot";
 
-const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  notes: z.string().optional(),
+const formSchema = v.object({
+  name: v.pipe(
+    v.string(),
+    v.minLength(2, "Name must be at least 2 characters")
+  ),
+  email: v.pipe(v.string(), v.email("Invalid email address")),
+  notes: v.optional(v.string()),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = v.InferOutput<typeof formSchema>;
 
 export function CreateCustomerButton({ apiToken }: { apiToken: string }) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: valibotResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
