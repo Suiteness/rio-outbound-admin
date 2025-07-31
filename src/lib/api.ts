@@ -186,23 +186,3 @@ export const getOffer = async (id, baseUrl, apiToken) => {
     };
   }
 };
-
-export const runCustomerWorkflow = async (id, baseUrl, apiToken) => {
-  const response = await fetch(baseUrl + `/api/customers/${id}/workflow`, {
-    headers: {
-      Authorization: `Bearer ${apiToken}`,
-    },
-    method: "POST",
-  });
-  if (response.ok) {
-    const data = await response.json();
-    return {
-      success: true,
-    };
-  } else {
-    console.error("Failed to run customer workflow");
-    return {
-      success: false,
-    };
-  }
-};

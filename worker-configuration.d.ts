@@ -5,7 +5,6 @@ declare namespace Cloudflare {
 	interface Env {
 		EXAMPLE_VALUE: "example_value";
 		DB: D1Database;
-		CUSTOMER_WORKFLOW: Workflow;
 	}
 }
 interface Env extends Cloudflare.Env {}

@@ -1,14 +1,20 @@
 ---
-import { User } from 'lucide-react';
+import { User, Phone, MessageSquare } from 'lucide-react';
 import Layout from '@/layouts/Layout.astro';
 
 import { CustomerService } from '@/lib/services/customer';
+import { PhoneCallService } from '@/lib/services/phone-call';
+import { TextMessageService } from '@/lib/services/text-message';
 
 const { DB } = Astro.locals.runtime.env;
 
 const customerService = new CustomerService(DB);
+const phoneCallService = new PhoneCallService(DB);
+const textMessageService = new TextMessageService(DB);
 
 const customers = await customerService.getAll();
+const phoneCallStats = await phoneCallService.getPhoneCallStats();
+const textMessageStats = await textMessageService.getTextMessageStats();
 
 const data = [
   {
@@ -16,6 +22,18 @@ const data = [
     value: customers.length,
     icon: User,
     href: '/admin/customers'
+  },
+  {
+    name: 'Phone Calls',
+    value: phoneCallStats.total,
+    icon: Phone,
+    href: '/admin/phone-calls'
+  },
+  {
+    name: 'Text Messages',
+    value: textMessageStats.total,
+    icon: MessageSquare,
+    href: '/admin/text-messages'
   }
 ]
 ---

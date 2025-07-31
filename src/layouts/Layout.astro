@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import ApiTokenMissingCard from '@/components/admin/api-token-missing-card';
 
 const currentPath = Astro.url.pathname;
-const title = Astro.props.title || 'SaaS Admin Template';
+const title = Astro.props.title || 'Rio Outbound Admin';
 const { API_TOKEN } = Astro.locals.runtime.env;
 const apiTokenSet = API_TOKEN && API_TOKEN !== '';
 ---
@@ -36,7 +36,7 @@ const apiTokenSet = API_TOKEN && API_TOKEN !== '';
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title ? `${title} - SaaS Admin Template` : 'SaaS Admin Template'}</title>
+    <title>{title ? `${title} - Rio Outbound Admin` : 'Rio Outbound Admin'}</title>
   </head>
   <body>
     <Header currentPath={currentPath} />

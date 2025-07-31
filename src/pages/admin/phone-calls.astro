@@ -1,0 +1,81 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { PhoneCallService } from '@/lib/services/phone-call';
+
+const { DB } = Astro.locals.runtime.env;
+const phoneCallService = new PhoneCallService(DB);
+
+const phoneCalls = await phoneCallService.getAllPhoneCalls();
+---
+
+<Layout title="Phone Calls">
+  <div class="space-y-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-3xl font-bold tracking-tight">Phone Calls</h1>
+      <div id="create-phone-call-button"></div>
+    </div>
+
+    <div class="rounded-md border">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b bg-muted/50">
+              <th class="h-12 px-4 text-left font-medium">ID</th>
+              <th class="h-12 px-4 text-left font-medium">Customer ID</th>
+              <th class="h-12 px-4 text-left font-medium">To Number</th>
+              <th class="h-12 px-4 text-left font-medium">From Number</th>
+              <th class="h-12 px-4 text-left font-medium">Status</th>
+              <th class="h-12 px-4 text-left font-medium">GigaML Call ID</th>
+              <th class="h-12 px-4 text-left font-medium">Created At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {phoneCalls.map((call) => (
+              <tr class="border-b">
+                <td class="px-4 py-2">{call.id}</td>
+                <td class="px-4 py-2">{call.customer_id}</td>
+                <td class="px-4 py-2">{call.to_number}</td>
+                <td class="px-4 py-2">{call.from_number}</td>
+                <td class="px-4 py-2">
+                  <span class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    call.status === 'completed' 
+                      ? 'bg-green-100 text-green-800' 
+                      : call.status === 'failed' 
+                      ? 'bg-red-100 text-red-800'
+                      : call.status === 'pending' || call.status === 'initiating'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {call.status}
+                  </span>
+                </td>
+                <td class="px-4 py-2">{call.gigaml_call_id || 'N/A'}</td>
+                <td class="px-4 py-2">{new Date(call.created_at).toLocaleString()}</td>
+              </tr>
+            ))}
+            {phoneCalls.length === 0 && (
+              <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-muted-foreground">
+                  No phone calls found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { CreatePhoneCall } from '@/components/admin/create-phone-call';
+  import { createRoot } from 'react-dom/client';
+
+  const buttonContainer = document.getElementById('create-phone-call-button');
+  if (buttonContainer) {
+    const root = createRoot(buttonContainer);
+    root.render(CreatePhoneCall({ 
+      onSuccess: () => window.location.reload() 
+    }));
+  }
+</script>

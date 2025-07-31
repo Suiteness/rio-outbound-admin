@@ -19,9 +19,14 @@
   ],
   "workflows": [
     {
-      "name": "saas-admin-template-customer-workflow",
-      "binding": "CUSTOMER_WORKFLOW",
-      "class_name": "CustomerWorkflow"
+      "name": "rio-outbound-phone-call-workflow",
+      "binding": "PHONE_CALL_WORKFLOW",
+      "class_name": "PhoneCallWorkflow"
+    },
+    {
+      "name": "rio-outbound-text-message-workflow",
+      "binding": "TEXT_MESSAGE_WORKFLOW",
+      "class_name": "TextMessageWorkflow"
     }
   ]
 }

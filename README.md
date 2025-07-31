@@ -1,4 +1,4 @@
-# SaaS Admin Template
+# Rio Outbound Admin
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/saas-admin-template)
 
@@ -105,4 +105,4 @@ npx wrangler secret put API_TOKEN
 
 This project includes a fully functional admin dashboard with customer and subscription management capabilities. It also includes an API with token authentication to access resources via REST, returning JSON data.
 
-It also includes a "Customer Workflow", built with [Cloudflare Workflows](https://developers.cloudflare.com/workflows). This workflow can be triggered in the UI or via the REST API to do arbitrary actions in the background for any given user. See [`customer_workflow.ts`]() to learn more about what you can do in this workflow.
+The project now includes outbound communication capabilities through phone calls and text messages, built with [Cloudflare Workflows](https://developers.cloudflare.com/workflows). These workflows can be triggered in the UI or via the REST API to send messages or initiate calls to customers.

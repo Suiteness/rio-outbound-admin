@@ -1,15 +1,21 @@
 ---
-import { RunCustomerWorkflowButton } from '@/components/admin/run-customer-workflow';
 import { CustomerOffersTable } from '@/components/admin/customer-offers-table';
 import { CreateCustomerOfferButton } from '@/components/admin/create-customer-offer';
+import { CreateCustomerPhoneCall } from '@/components/admin/create-customer-phone-call';
+import { CreateCustomerTextMessage } from '@/components/admin/create-customer-text-message';
 import Layout from '@/layouts/Layout.astro';
 import { CustomerService } from '@/lib/services/customer';
+import { PhoneCallService } from '@/lib/services/phone-call';
+import { TextMessageService } from '@/lib/services/text-message';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const { API_TOKEN, DB } = Astro.locals.runtime.env;
 const { id } = Astro.params;
 
 const customerService = new CustomerService(DB);
+const phoneCallService = new PhoneCallService(DB);
+const textMessageService = new TextMessageService(DB);
+
 const customer = await customerService.getById(Number(id));
 
 if (!customer) {
@@ -17,9 +23,18 @@ if (!customer) {
 }
 
 const customerName = `${customer.firstName} ${customer.lastName}`;
+
+// Fetch customer's communication history
+const phoneCalls = await phoneCallService.getPhoneCallsByCustomer(Number(id));
+const textMessages = await textMessageService.getTextMessagesByCustomer(Number(id));
 ---
 <Layout title={customerName}>
-  <div class="space-y-8">
+  <div 
+    class="space-y-8" 
+    data-customer-id={customer.id}
+    data-customer-name={customerName}
+    data-customer-phone={customer.phoneNumber || ""}
+  >
     <!-- Customer Details Section -->
     <div>
       <h2 class="text-2xl font-bold tracking-tight mb-4">Customer Details</h2>
@@ -80,6 +95,127 @@ const customerName = `${customer.firstName} ${customer.lastName}`;
       )}
     </div>
 
+    <!-- Phone Calls Section -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold tracking-tight">Phone Calls</h2>
+        <CreateCustomerPhoneCall 
+          customerId={customer.id} 
+          customerPhone={customer.phoneNumber || ''} 
+          customerName={customerName} 
+          customerOffers={customer.offers || []}
+          client:load 
+        />
+      </div>
+      
+      {phoneCalls && phoneCalls.length > 0 ? (
+        <div class="rounded-md border">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b bg-muted/50">
+                  <th class="h-12 px-4 text-left font-medium">To Number</th>
+                  <th class="h-12 px-4 text-left font-medium">From Number</th>
+                  <th class="h-12 px-4 text-left font-medium">Status</th>
+                  <th class="h-12 px-4 text-left font-medium">GigaML Call ID</th>
+                  <th class="h-12 px-4 text-left font-medium">Created At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {phoneCalls.map((call) => (
+                  <tr class="border-b">
+                    <td class="px-4 py-2">{call.to_number}</td>
+                    <td class="px-4 py-2">{call.from_number}</td>
+                    <td class="px-4 py-2">
+                      <span class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        call.status === 'completed' 
+                          ? 'bg-green-100 text-green-800' 
+                          : call.status === 'failed' 
+                          ? 'bg-red-100 text-red-800'
+                          : call.status === 'pending' || call.status === 'initiating'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {call.status}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2">{call.gigaml_call_id || 'N/A'}</td>
+                    <td class="px-4 py-2">{new Date(call.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div class="rounded-lg border p-8 text-center">
+          <p class="text-muted-foreground">No phone calls yet for this customer.</p>
+          <p class="text-sm text-muted-foreground mt-2">Initiate the first call using the button above.</p>
+        </div>
+      )}
+    </div>
+
+    <!-- Text Messages Section -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold tracking-tight">Text Messages</h2>
+        <CreateCustomerTextMessage 
+          customerId={customer.id} 
+          customerPhone={customer.phoneNumber || ''} 
+          customerName={customerName} 
+          client:load 
+        />
+      </div>
+      
+      {textMessages && textMessages.length > 0 ? (
+        <div class="rounded-md border">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b bg-muted/50">
+                  <th class="h-12 px-4 text-left font-medium">To Number</th>
+                  <th class="h-12 px-4 text-left font-medium">From Number</th>
+                  <th class="h-12 px-4 text-left font-medium">Message</th>
+                  <th class="h-12 px-4 text-left font-medium">Status</th>
+                  <th class="h-12 px-4 text-left font-medium">Created At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {textMessages.map((message) => (
+                  <tr class="border-b">
+                    <td class="px-4 py-2">{message.to_number}</td>
+                    <td class="px-4 py-2">{message.from_number}</td>
+                    <td class="px-4 py-2 max-w-xs truncate" title={message.message_content}>
+                      {message.message_content}
+                    </td>
+                    <td class="px-4 py-2">
+                      <span class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        message.status === 'sent' || message.status === 'delivered'
+                          ? 'bg-green-100 text-green-800' 
+                          : message.status === 'failed' 
+                          ? 'bg-red-100 text-red-800'
+                          : message.status === 'pending' || message.status === 'sending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {message.status}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2">{new Date(message.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div class="rounded-lg border p-8 text-center">
+          <p class="text-muted-foreground">No text messages yet for this customer.</p>
+          <p class="text-sm text-muted-foreground mt-2">Send the first message using the button above.</p>
+        </div>
+      )}
+    </div>
+
     <!-- Customer Offers Section -->
     <div>
       <div class="flex items-center justify-between mb-4">
@@ -101,9 +237,5 @@ const customerName = `${customer.firstName} ${customer.lastName}`;
         </div>
       )}
     </div>
-  </div>
-
-  <div slot="actions">
-    <RunCustomerWorkflowButton apiToken={API_TOKEN} client:load customerId={id} />
   </div>
 </Layout>

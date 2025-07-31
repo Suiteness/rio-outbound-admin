@@ -1,0 +1,83 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { TextMessageService } from '@/lib/services/text-message';
+
+const { DB } = Astro.locals.runtime.env;
+const textMessageService = new TextMessageService(DB);
+
+const textMessages = await textMessageService.getAllTextMessages();
+---
+
+<Layout title="Text Messages">
+  <div class="space-y-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-3xl font-bold tracking-tight">Text Messages</h1>
+      <div id="create-text-message-button"></div>
+    </div>
+
+    <div class="rounded-md border">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b bg-muted/50">
+              <th class="h-12 px-4 text-left font-medium">ID</th>
+              <th class="h-12 px-4 text-left font-medium">Customer ID</th>
+              <th class="h-12 px-4 text-left font-medium">To Number</th>
+              <th class="h-12 px-4 text-left font-medium">From Number</th>
+              <th class="h-12 px-4 text-left font-medium">Message</th>
+              <th class="h-12 px-4 text-left font-medium">Status</th>
+              <th class="h-12 px-4 text-left font-medium">Created At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {textMessages.map((message) => (
+              <tr class="border-b">
+                <td class="px-4 py-2">{message.id}</td>
+                <td class="px-4 py-2">{message.customer_id}</td>
+                <td class="px-4 py-2">{message.to_number}</td>
+                <td class="px-4 py-2">{message.from_number}</td>
+                <td class="px-4 py-2 max-w-xs truncate" title={message.message_content}>
+                  {message.message_content}
+                </td>
+                <td class="px-4 py-2">
+                  <span class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    message.status === 'sent' || message.status === 'delivered'
+                      ? 'bg-green-100 text-green-800' 
+                      : message.status === 'failed' 
+                      ? 'bg-red-100 text-red-800'
+                      : message.status === 'pending' || message.status === 'sending'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {message.status}
+                  </span>
+                </td>
+                <td class="px-4 py-2">{new Date(message.created_at).toLocaleString()}</td>
+              </tr>
+            ))}
+            {textMessages.length === 0 && (
+              <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-muted-foreground">
+                  No text messages found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { CreateTextMessage } from '@/components/admin/create-text-message';
+  import { createRoot } from 'react-dom/client';
+
+  const buttonContainer = document.getElementById('create-text-message-button');
+  if (buttonContainer) {
+    const root = createRoot(buttonContainer);
+    root.render(CreateTextMessage({ 
+      onSuccess: () => window.location.reload() 
+    }));
+  }
+</script>
